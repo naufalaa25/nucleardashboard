@@ -1,248 +1,585 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuclear Power Plant Standards & Regulations Database</title>
-    <!-- Load React and Babel from CDN -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        body { margin: 0; padding: 0; background-color: #060b14; }
-        /* Hide content until Babel renders */
-        #root:empty { display: flex; justify-content: center; align-items: center; height: 100vh; color: #8b9ec0; font-family: sans-serif; }
-        #root:empty::after { content: "Loading Dashboard..."; }
-        /* Simple scrollbar styling */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0d1420; }
-        ::-webkit-scrollbar-thumb { background: #182035; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4f8fff44; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuclear Regs Database Dashboard</title>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Reset CSS dasar & kustomisasi scrollbar agar sesuai tema gelap */
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100vh;
+      background-color: #060b14;
+      overflow: hidden; /* Dihandle oleh layout dashboard */
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1420; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #182035; 
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4f8fff; 
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState } = React;
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
 
-        const C = {
-          bg: "#060b14", bgCard: "#0d1420", bgHover: "#131d2e",
-          accent: "#00e4b8", accentDim: "#00e4b822",
-          blue: "#4f8fff", blueDim: "#4f8fff22",
-          amber: "#f5a623", red: "#ff4757", purple: "#a78bfa",
-          pink: "#f472b6", cyan: "#22d3ee", green: "#22c55e",
-          text: "#e8edf5", textDim: "#8b9ec0", textMuted: "#5a6d8a",
-          border: "#182035",
-        };
-        const SC = { A: "#22c55e", S: "#f5a623", E: "#ff4757" };
-        const SL = { A: "Active", S: "Superseded", E: "Expired" };
-        const TC = { Requirement: C.accent, Regulation: C.blue, Standard: C.purple, Guide: C.amber, Guideline: C.amber, Treaty: C.red, Directive: C.pink, Recommendation: C.cyan, Law: C.red, Fundamentals: C.green, Plan: C.cyan };
+    const C = {
+      bg: "#060b14", bgCard: "#0d1420", bgHover: "#131d2e",
+      accent: "#00e4b8", accentDim: "#00e4b822",
+      blue: "#4f8fff", blueDim: "#4f8fff22",
+      amber: "#f5a623", red: "#ff4757", purple: "#a78bfa",
+      pink: "#f472b6", cyan: "#22d3ee", green: "#22c55e",
+      text: "#e8edf5", textDim: "#8b9ec0", textMuted: "#5a6d8a",
+      border: "#182035",
+    };
+    const SC = { A: "#22c55e", S: "#f5a623", E: "#ff4757" };
+    const SL = { A: "Active", S: "Superseded", E: "Expired" };
+    const TC = { Requirement: C.accent, Regulation: C.blue, Standard: C.purple, Guide: C.amber, Guideline: C.amber, Treaty: C.red, Directive: C.pink, Recommendation: C.cyan, Law: C.red, Fundamentals: C.green, Plan: C.cyan };
 
-        const INTL = {
-          "Planning Phase (Feasibility & Licensing)": [
-            { code: "IAEA NG-T-3.11", title: "Preparation of a Feasibility Study for New Nuclear Power Projects", body: "IAEA", year: 2023, type: "Guide", status: "A", desc: "This guide covers the entire process of preparing a feasibility study for new nuclear power plant projects. It addresses economic and financial analysis, energy demand forecasting, grid capacity assessment, technology selection methodology, site screening criteria, workforce planning, and stakeholder engagement strategies. The publication provides practical templates for cost-benefit analysis, levelized cost of electricity (LCOE) calculations, and comparative evaluation of nuclear versus alternative energy sources. It also covers risk assessment frameworks, project scheduling with critical path identification, and financing models including public-private partnerships, export credit agencies, and sovereign guarantees applicable to nuclear new-build projects." },
-            { code: "IAEA NG-G-3.1 (Rev.1)", title: "Milestones in the Development of a National Infrastructure for Nuclear Power", body: "IAEA", year: 2015, type: "Guide", status: "A", desc: "This foundational guide establishes a three-phase milestone approach for countries developing nuclear power infrastructure. Phase 1 covers considerations before a decision to launch a nuclear programme, including national energy policy, nuclear safety framework establishment, and stakeholder involvement. Phase 2 addresses preparatory work for contracting after a policy decision, covering regulatory body strengthening, site selection, environmental protection, and human resource development. Phase 3 focuses on activities to implement a first nuclear power plant, including construction management, supply chain qualification, and operational readiness. The guide addresses 19 infrastructure issues spanning national position, nuclear safety, management, funding, legal framework, safeguards, radiation protection, electrical grid, human resources, stakeholder involvement, site and supporting facilities, environmental protection, emergency planning, security, nuclear fuel cycle, radioactive waste, industrial involvement, and procurement." },
-            { code: "IAEA SSG-12", title: "Licensing Process for Nuclear Installations", body: "IAEA", year: 2010, type: "Guide", status: "A", desc: "This safety guide describes how the licensing process should be applied at various stages of a nuclear installation's lifetime. It covers siting and site evaluation, design review and approval, construction authorization, commissioning permits, operating licenses, and decommissioning approval. The guide addresses required documentation at each stage including Preliminary Safety Analysis Reports (PSAR), Final Safety Analysis Reports (FSAR), Environmental Impact Assessments (EIA), Quality Assurance programmes, and emergency preparedness plans. It provides recommendations on the regulatory body's review process, public participation requirements, conditions and limitations on licenses, and mechanisms for license amendments and renewals. The guide also discusses the application of a graded approach to licensing based on the potential hazards of the installation." },
-            { code: "IAEA SSG-16 (Rev.1)", title: "Establishing the Safety Infrastructure for a Nuclear Power Programme", body: "IAEA", year: 2020, type: "Guide", status: "A", desc: "This revised guide provides recommendations for embarking countries on establishing the governmental, legal, and regulatory infrastructure needed for a nuclear power programme. It covers the establishment of an independent regulatory body with adequate authority, staffing, and competence. Topics include development of regulations and guides, creation of a licensing process, building inspection capabilities, establishing enforcement mechanisms, and developing a national policy and strategy for safety. The guide addresses coordination between nuclear safety, security, and safeguards; development of radiation protection programmes; and establishment of emergency preparedness and response capabilities. It provides a phased approach aligned with the milestones methodology." },
-            { code: "IAEA SSR-1", title: "Site Evaluation for Nuclear Installations", body: "IAEA", year: 2019, type: "Requirement", status: "A", desc: "This publication establishes safety requirements for evaluating sites for nuclear installations. It covers evaluation of natural and human-induced external hazards including seismic activity, volcanic events, meteorological extremes, flooding, geotechnical stability, and aircraft crashes. The requirements address population distribution analysis, emergency planning zone feasibility, dispersion of radioactive releases in air and water, and effects on the environment. It mandates investigation of site characteristics that may affect the design basis, including seismology, geology, meteorology, hydrology, and hydrogeology. The standard also requires assessment of changes in hazards and site characteristics over the lifetime of the installation, and confirmation of continued site suitability through periodic review." },
-            { code: "IAEA SSG-35", title: "Site Survey and Site Selection for Nuclear Installations", body: "IAEA", year: 2014, type: "Guide", status: "A", desc: "This guide provides recommendations on the process of site survey and site selection for nuclear installations. It describes a multi-stage approach starting with regional analysis to identify potential sites, followed by screening evaluation to select candidate sites, and detailed site evaluation to confirm acceptability. Topics covered include geological and seismological investigations, assessment of external hazards (natural and human-induced), population and land-use considerations, cooling water availability, grid connection feasibility, transportation access, and environmental baseline characterization. The guide addresses exclusion criteria, ranking methodology for comparing candidate sites, and the interface between site selection and subsequent detailed site evaluation activities." },
-            { code: "IAEA SSG-9", title: "Seismic Hazards in Site Evaluation for Nuclear Installations", body: "IAEA", year: 2022, type: "Guide", status: "A", desc: "This revised guide provides detailed recommendations on evaluating seismic hazards for nuclear installation sites. It covers geological, geophysical, and geotechnical investigations at regional (300km radius), near-regional (25km), site vicinity (5km), and site area (1km) scales. Topics include identification of capable faults, probabilistic and deterministic seismic hazard analysis (PSHA/DSHA), development of site-specific response spectra, assessment of fault displacement potential, ground motion prediction equations, site response analysis, and consideration of seismically induced hazards such as tsunamis and landslides. The guide addresses the derivation of seismic design parameters including the design basis earthquake and beyond-design-basis seismic events." },
-            { code: "IAEA SSG-18", title: "Meteorological and Hydrological Hazards in Site Evaluation", body: "IAEA", year: 2011, type: "Guide", status: "A", desc: "This guide covers evaluation of meteorological and hydrological hazards for nuclear installation site evaluation. Topics include extreme wind speeds, tornadoes, tropical cyclones, precipitation extremes, temperature extremes, lightning, and atmospheric dispersion characteristics. For hydrological hazards, it addresses river flooding, coastal flooding, storm surge, tsunamis (non-seismic origin), seiches, upstream dam failures, and combinations of flood-causing events. The guide provides methods for deriving design basis parameters for each hazard, including extreme value statistical analysis, probable maximum precipitation (PMP), probable maximum flood (PMF), and design basis flood level determination." },
-            { code: "IAEA SSG-21", title: "Volcanic Hazards in Site Evaluation for Nuclear Installations", body: "IAEA", year: 2012, type: "Guide", status: "A", desc: "This guide provides recommendations on assessing volcanic hazards during nuclear installation site evaluation. It covers identification and characterization of volcanoes potentially affecting the site, assessment of volcanic hazard phenomena including lava flows, pyroclastic flows, tephra fall, volcanic gases, lahars, debris avalanches, volcanic earthquakes, and tsunamis of volcanic origin. The guide addresses volcanic hazard screening criteria, assessment of eruption probability and recurrence rates, development of design basis volcanic events, and consideration of the potential for new volcanic vents. It is particularly relevant for Indonesia given its position on the Pacific Ring of Fire with over 120 active volcanoes." },
-            { code: "IAEA SSG-61", title: "Format and Content of the Safety Analysis Report for NPPs", body: "IAEA", year: 2021, type: "Guide", status: "A", desc: "This guide provides detailed recommendations on the structure and content of the Safety Analysis Report (SAR), the key licensing document for nuclear power plants. It covers 19 chapters including site characteristics, design of structures and systems, reactor core and fuel analysis, reactor coolant system, engineered safety features, instrumentation and control, electrical power systems, auxiliary systems, steam and power conversion, radioactive waste management, radiation protection, conduct of operations, initial test programme, accident analysis, technical specifications, quality assurance, and decommissioning. The guide addresses both preliminary SAR (PSAR) for construction licensing and final SAR (FSAR) for operating license, including the treatment of design extension conditions and severe accident management." },
-            { code: "IAEA GSR Part 1 (Rev.1)", title: "Governmental, Legal and Regulatory Framework for Safety", body: "IAEA", year: 2016, type: "Requirement", status: "A", desc: "This publication establishes the fundamental requirements for a national framework for radiation protection and nuclear safety. It covers the responsibilities of the government in establishing a regulatory body, ensuring its independence, and providing it with adequate authority and resources. Topics include legislative requirements for authorization of facilities and activities, inspection and enforcement provisions, public information and participation, establishment of emergency preparedness arrangements, and the interface between safety, security, and safeguards. The standard requires the government to establish national policies and strategies for safety, allocate responsibilities to all relevant parties, and ensure a system of accounting for and control of nuclear and radioactive material." },
-            { code: "IAEA GSG-13 (Rev.1)", title: "Functions and Processes of the Regulatory Body for Safety", body: "IAEA", year: 2024, type: "Guide", status: "A", desc: "This newly revised guide provides updated recommendations on the regulatory body's core functions. It addresses the authorization process including review and assessment of applications, development and maintenance of regulations and guides, inspection programmes and compliance monitoring, enforcement actions and their graduated application, and the regulatory body's involvement in emergency preparedness. The guide also covers the regulatory body's management system, communication with stakeholders, international cooperation, research support for regulatory decisions, and the use of independent expert organizations for technical support. It reflects lessons learned from the Fukushima Daiichi accident and modern regulatory practices." },
-            { code: "IAEA NS-R-3 (Rev.1)", title: "Site Evaluation for Nuclear Installations (Old)", body: "IAEA", year: 2016, type: "Requirement", status: "S", desc: "This was the former safety requirements publication for site evaluation of nuclear installations, now superseded by SSR-1 (2019). It established requirements for evaluating site-related hazards and the suitability of sites for nuclear installations. The superseding publication SSR-1 incorporated lessons learned from the Fukushima Daiichi accident, particularly regarding evaluation of combinations of external hazards and cliff-edge effects, and strengthened requirements for beyond-design-basis external events assessment." },
-            { code: "10 CFR 50", title: "Domestic Licensing of Production and Utilization Facilities", body: "US NRC", year: 2024, type: "Regulation", status: "A", desc: "This regulation provides the complete US regulatory framework for the two-step licensing process of nuclear power reactors: construction permit (CP) followed by operating license (OL). It establishes requirements for filing applications, review procedures, public hearing rights, general design criteria (Appendix A), quality assurance criteria (Appendix B), and technical specifications. The regulation covers reactor siting criteria, financial qualifications of applicants, technical qualifications, environmental review requirements under NEPA, emergency planning standards (Appendix E), and seismic and geologic siting criteria (Appendix S). It also addresses license renewal, license transfer, and decommissioning requirements." },
-            { code: "10 CFR 52", title: "Licenses, Certifications, and Approvals for NPPs", body: "US NRC", year: 2024, type: "Regulation", status: "A", desc: "This regulation establishes the US framework for the one-step combined license (COL) process, early site permits (ESP), standard design certifications (DC), and standard design approvals (SDA). Under this process, all safety and environmental issues are resolved before construction begins, providing regulatory certainty for investors. The regulation covers requirements for design certification applications, including PRA, severe accident analysis, and ITAAC (inspections, tests, analyses, and acceptance criteria). It addresses manufacturing licenses for modular reactor units and processes for maintaining and amending standard designs. This regulation is increasingly used for new nuclear power plant applications." },
-            { code: "10 CFR 100", title: "Reactor Site Criteria", body: "US NRC", year: 2024, type: "Regulation", status: "A", desc: "This regulation establishes criteria for evaluating the suitability of proposed sites for nuclear power and test reactors. It covers population density and use characteristics of the site environs, physical characteristics of the site including seismology, meteorology, geology, and hydrology, and factors that could influence the probability and consequences of radioactive releases. The regulation defines exclusion area, low population zone, and population center distance requirements. It also establishes requirements for geological, seismological, and engineering characteristics investigation with specific provisions for seismic design parameters." },
-            { code: "NUREG-0800", title: "Standard Review Plan for Safety Analysis Reports", body: "US NRC", year: 2020, type: "Guideline", status: "A", desc: "This comprehensive document provides NRC staff guidance for reviewing license applications and Safety Analysis Reports submitted by applicants. It covers review procedures for all aspects of nuclear power plant safety including site characteristics, structural engineering, mechanical engineering, materials engineering, reactor systems, instrumentation and control, electrical engineering, power conversion systems, auxiliary systems, radiation protection, conduct of operations, accident analysis, transient and accident analysis, fuel design, containment systems, and quality assurance. Each section provides acceptance criteria, review procedures, and evaluation findings templates." },
-            { code: "EUR Document Vol.1-4", title: "European Utility Requirements for LWR Nuclear Power Plants", body: "EUR", year: 2021, type: "Standard", status: "A", desc: "The European Utility Requirements document represents a consensus among major European utilities on the characteristics of future light water reactor nuclear power plants. Volume 1 covers general nuclear island requirements including safety approach, design basis, severe accidents, and quality assurance. Volume 2 addresses generic nuclear island requirements by system. Volume 3 covers specific requirements for PWR designs. Volume 4 addresses specific requirements for BWR designs. The EUR document defines safety targets, design principles including core damage frequency and large early release frequency limits, and operational requirements that form the basis for new NPP procurement in Europe." },
-            { code: "IAEA NE Series NP-T-5.9", title: "Nuclear Energy Infrastructure for Newcomer Countries", body: "IAEA", year: 2021, type: "Guide", status: "A", desc: "This guide provides specific guidance for countries considering or embarking on nuclear power programmes. It covers the development of national nuclear energy infrastructure across all 19 infrastructure issues, with particular focus on the unique challenges faced by newcomer countries including building a credible and competent regulatory body, developing human resources, establishing the legal framework, implementing safeguards obligations, and ensuring public acceptance. The guide provides practical examples from countries that have recently started nuclear programmes and lessons learned from both successful and unsuccessful nuclear programme developments." },
-            { code: "IAEA NG-T-3.7", title: "Managing the Financial Risk Associated with Financing of New IPP Projects", body: "IAEA", year: 2017, type: "Guide", status: "A", desc: "This technical guide addresses the complex financial risk management challenges associated with new nuclear power plant construction. It covers project cost estimation methodologies, financing structures (project finance, corporate finance, sovereign support), risk allocation between parties, construction risk management, interest rate and currency risks, market price risk for electricity, and political and regulatory risks. The guide discusses the role of government support mechanisms including loan guarantees, power purchase agreements, contracts for difference, and regulated asset base models. It provides case studies from recent nuclear construction projects and analysis of cost overrun experiences." },
-            { code: "WENRA RHWG", title: "Safety Reference Levels for New Reactor Design", body: "WENRA", year: 2020, type: "Guideline", status: "A", desc: "The Western European Nuclear Regulators' Association safety reference levels establish common expectations for nuclear safety across member states. For new reactor designs, these cover fundamental safety objectives, design basis requirements, severe accident management, radiation protection, waste management, emergency preparedness, and decommissioning planning. The reference levels address defence in depth implementation, independence of safety systems, core damage prevention and mitigation, containment integrity under severe accidents, and consideration of external hazards including those identified after Fukushima such as multi-unit events and extended loss of power." }  
-          ],
-          "Construction Phase": [
-            { code: "IAEA SSG-38", title: "Construction for Nuclear Installations", body: "IAEA", year: 2015, type: "Guide", status: "A", desc: "This guide provides comprehensive recommendations on construction activities for nuclear installations. It addresses management of construction, organizational responsibilities, and transition to commissioning." },
-            { code: "ASME BPVC Section III", title: "Rules for Construction of Nuclear Facility Components", body: "ASME", year: 2023, type: "Standard", status: "A", desc: "Principal code governing the construction of nuclear facility components including metallic components, reactor coolant pressure boundaries, and containments." },
-            { code: "ASME NQA-1", title: "Quality Assurance Requirements for Nuclear Facility Applications", body: "ASME", year: 2022, type: "Standard", status: "A", desc: "Establishes quality assurance requirements for the siting, design, construction, operation, and decommissioning of nuclear facilities." }
-          ],
-          "Safety & Licensing": [
-            { code: "IAEA SF-1", title: "Fundamental Safety Principles", body: "IAEA", year: 2006, type: "Fundamentals", status: "A", desc: "Foundational publication establishing the fundamental safety objective and ten associated safety principles for radiation protection." },
-            { code: "IAEA SSR-2/1 (Rev.1)", title: "Safety of Nuclear Power Plants: Design", body: "IAEA", year: 2016, type: "Requirement", status: "A", desc: "Establishes specific safety requirements for the design of nuclear power plants including defence in depth and post-Fukushima enhancements." },
-            { code: "Convention on Nuclear Safety", title: "Convention on Nuclear Safety (CNS)", body: "IAEA/UN", year: 1996, type: "Treaty", status: "A", desc: "International convention committing participating states to maintaining a high level of nuclear safety by setting international benchmarks." }
-          ],
-          "Design & Engineering": [
-            { code: "IAEA SSG-30", title: "Safety Classification of SSCs in NPPs", body: "IAEA", year: 2014, type: "Guide", status: "A", desc: "Recommendations on classifying structures, systems, and components (SSCs) according to their importance to safety." },
-            { code: "IEEE 603", title: "Criteria for Safety Systems for Nuclear Power Generating Stations", body: "IEEE", year: 2018, type: "Standard", status: "A", desc: "Minimum functional and design criteria for the power, instrumentation, and control portions of NPP safety systems." }
-          ]
-          // ... (Extended data continues)
-        };
+    const TOPIC_DESC = {
+      "Planning Phase (Feasibility & Licensing)": "This topic covers the full spectrum of regulations governing the initial stages of nuclear power plant development. It encompasses feasibility studies that assess the economic, technical, and environmental viability of a proposed nuclear project, as well as the nuclear infrastructure milestones a country must achieve before embarking on a nuclear programme.",
+      "Construction Phase": "The construction phase regulations govern all activities from groundbreaking through completion of the physical nuclear power plant structure. This includes stringent quality assurance programs for nuclear-grade fabrication, welding, concrete placement, and steel erection.",
+      "Safety & Licensing": "This topic encompasses the foundational safety framework that underpins all nuclear activities. It includes the fundamental safety principles established by the IAEA, which define the safety objective of protecting people and the environment from harmful effects of ionizing radiation.",
+      "Design & Engineering": "Design and engineering standards provide the detailed technical requirements for all systems, structures, and components (SSCs) of a nuclear power plant. This covers reactor core design, reactor coolant pressure boundary design, containment design, and I&C systems.",
+      "Environmental & Waste": "Environmental and waste management regulations address the entire lifecycle of radioactive materials from generation through final disposal. This includes prospective radiological environmental impact assessments and radioactive waste classification systems.",
+      "Emergency Preparedness": "Emergency preparedness regulations establish the framework for planning, preparing, and responding to nuclear or radiological emergencies. They define planning zones, functional requirements for emergency organizations, and criteria for protective actions.",
+      "Security & Safeguards": "Security and safeguards regulations protect nuclear materials and facilities against theft, sabotage, unauthorized access, and diversion for weapons purposes. Nuclear security covers physical protection and computer security.",
+      "Decommissioning & Transport": "Decommissioning regulations govern the safe termination of nuclear facility operations and return of the site to unrestricted or restricted use. Transport regulations establish safety standards for packaging and transporting radioactive materials.",
+    };
 
-        const INDO = {
-          "Planning Phase (Feasibility & Licensing)": [
-            { code: "UU No. 10/1997", title: "Undang-Undang Ketenaganukliran (Nuclear Energy Act)", body: "DPR RI", year: 1997, type: "Law", status: "A", desc: "Primary law governing all aspects of nuclear energy utilization in Indonesia. It establishes the legal framework for research, development, and application for peaceful purposes." },
-            { code: "PP No. 5/2021", title: "Penyelenggaraan Perizinan Berusaha Berbasis Risiko", body: "Pemerintah RI", year: 2021, type: "Regulation", status: "A", desc: "Establishes the risk-based business licensing system through the OSS. Nuclear facilities are categorized as highest risk requiring stringent technical licensing." },
-            { code: "Perba BAPETEN 1/2022", title: "Perizinan Fasilitas dan Sumber Radiasi Pengion", body: "BAPETEN", year: 2022, type: "Regulation", status: "A", desc: "Establishes the detailed licensing requirements for NPPs: site evaluation approval, construction permit, commissioning, and operating license." },
-            { code: "RUPTL 2025-2034", title: "Rencana Usaha Penyediaan Tenaga Listrik (PLN)", body: "ESDM/PLN", year: 2025, type: "Plan", status: "A", desc: "PLN's 10-year plan for 2025-2034 including first nuclear capacity for Sumatra and Kalimantan by 2032/2033." }
-          ],
-          "Construction Phase": [
-            { code: "PP No. 54/2012 Bab III", title: "Keselamatan Konstruksi Instalasi Nuklir", body: "Pemerintah RI", year: 2012, type: "Regulation", status: "A", desc: "Specifically addresses safety requirements during construction, including QA programs and BAPETEN inspection hold points." },
-            { code: "Perka BAPETEN 5/2007", title: "Ketentuan Keselamatan Desain Reaktor Daya", body: "BAPETEN", year: 2007, type: "Regulation", status: "A", desc: "Safety provisions for power reactor design covering fundamental safety functions and defence in depth." }
-          ],
-          "Safety & Licensing": [
-            { code: "PP No. 45/2023", title: "Keselamatan Radiasi Pengion dan Keamanan Zat Radioaktif", body: "Pemerintah RI", year: 2023, type: "Regulation", status: "A", desc: "Latest regulation on radiation safety and source security, replacing PP 33/2007. Aligned with current IAEA GSR Part 3." }
-          ]
-          // ... (Extended data continues)
-        };
+    const INTL = {
+      "Planning Phase (Feasibility & Licensing)": [
+        { code: "IAEA NG-T-3.11", title: "Preparation of a Feasibility Study for New Nuclear Power Projects", body: "IAEA", year: 2023, type: "Guide", status: "A", desc: "This guide provides comprehensive methodology for performing feasibility studies for new NPP projects." },
+        { code: "IAEA NG-G-3.1 (Rev.1)", title: "Milestones in the Development of a National Infrastructure for Nuclear Power", body: "IAEA", year: 2015, type: "Guide", status: "A", desc: "Defines three phases of nuclear infrastructure development that newcomer countries must achieve." },
+        { code: "IAEA SSR-1", title: "Site Evaluation for Nuclear Installations", body: "IAEA", year: 2019, type: "Requirement", status: "A", desc: "Establishes safety requirements for the evaluation of sites for nuclear installations, including natural and human-induced external hazards." },
+        { code: "10 CFR 50", title: "Domestic Licensing of Production and Utilization Facilities", body: "US NRC", year: 2024, type: "Regulation", status: "A", desc: "The primary US regulation governing nuclear reactor licensing under the traditional two-step process." },
+        { code: "10 CFR 51", title: "Environmental Protection Regulations for Domestic Licensing", body: "US NRC", year: 2023, type: "Regulation", status: "A", desc: "Implements section 102(2) of the National Environmental Policy Act (NEPA) for NRC licensing, detailing requirements for Environmental Impact Statements (EIS) for NPPs." },
+        { code: "UK ONR SAPs", title: "Safety Assessment Principles for Nuclear Facilities", body: "UK ONR", year: 2020, type: "Guideline", status: "A", desc: "Provides the framework used by UK regulators to assess safety cases for nuclear facilities. Heavily utilizes the ALARP (As Low As Reasonably Practicable) principle." }
+      ],
+      "Construction Phase": [
+        { code: "ASME BPVC Section III", title: "Rules for Construction of Nuclear Facility Components", body: "ASME", year: 2023, type: "Standard", status: "A", desc: "The primary international code for construction of nuclear facility components including metallic pressure vessels, piping, and pumps." },
+        { code: "ASME BPVC Sec III Div.2", title: "Code for Concrete Containments (ACI 359)", body: "ASME/ACI", year: 2023, type: "Standard", status: "A", desc: "Specific rules for design and construction of concrete reactor containment structures." },
+        { code: "ISO 19443:2018", title: "Quality Management Systems for Nuclear Supply Chain", body: "ISO", year: 2018, type: "Standard", status: "A", desc: "Specific requirements for the application of ISO 9001:2015 by organizations in the supply chain of the nuclear energy sector supplying products and services important to nuclear safety." },
+        { code: "RCC-M", title: "Design and Construction Rules for Mechanical Components of PWR", body: "AFCEN", year: 2022, type: "Standard", status: "A", desc: "French code for mechanical components in PWR nuclear islands, used extensively for EPR reactor construction." }
+      ],
+      "Safety & Licensing": [
+        { code: "IAEA SF-1", title: "Fundamental Safety Principles", body: "IAEA", year: 2006, type: "Fundamentals", status: "A", desc: "Establishes the fundamental safety objective of protecting people and the environment from harmful effects of ionizing radiation." },
+        { code: "IAEA SSR-2/1 (Rev.1)", title: "Safety of Nuclear Power Plants: Design", body: "IAEA", year: 2016, type: "Requirement", status: "A", desc: "Specific safety requirements for NPP design incorporating post-Fukushima lessons." },
+        { code: "IAEA SSG-25", title: "Periodic Safety Review for Nuclear Power Plants", body: "IAEA", year: 2013, type: "Guide", status: "A", desc: "Guidance on conducting Periodic Safety Reviews (PSR), typically every 10 years, to assess cumulative effects of plant ageing, modifications, and operating experience to justify continued safe operation." },
+        { code: "WENRA SRL 2020", title: "Safety Reference Levels for Existing Reactors", body: "WENRA", year: 2020, type: "Guideline", status: "A", desc: "Updated harmonized safety reference levels for existing reactors across European member states." }
+      ],
+      "Design & Engineering": [
+        { code: "IEEE 603", title: "Criteria for Safety Systems for Nuclear Power Generating Stations", body: "IEEE", year: 2018, type: "Standard", status: "A", desc: "Establishes minimum functional and design criteria for safety systems in NPPs." },
+        { code: "IEC 61513", title: "NPP I&C Systems Important to Safety", body: "IEC", year: 2011, type: "Standard", status: "A", desc: "General requirements for all I&C systems important to safety in NPPs." },
+        { code: "IEC 61508", title: "Functional Safety of E/E/PE Safety-related Systems", body: "IEC", year: 2010, type: "Standard", status: "A", desc: "A core multi-industry standard applied in nuclear contexts for the lifecycle, hazard analysis, and Safety Integrity Level (SIL) targeting of electronic safety systems." }
+      ],
+      "Environmental & Waste": [
+        { code: "IAEA SSR-5", title: "Disposal of Radioactive Waste", body: "IAEA", year: 2011, type: "Requirement", status: "A", desc: "Safety requirements for disposal of all waste types covering near-surface, intermediate-depth, and geological disposal." },
+        { code: "EPA 40 CFR 190", title: "Environmental Radiation Protection Standards for Nuclear Power", body: "US EPA", year: 2024, type: "Regulation", status: "A", desc: "Limits the radiation doses to the public and the total quantity of radioactive materials that enter the general environment from the entire nuclear fuel cycle." },
+        { code: "IAEA SSG-14", title: "Geological Disposal Facilities for Radioactive Waste", body: "IAEA", year: 2011, type: "Guide", status: "A", desc: "Provides guidance on the development, operation, and closure of deep geological disposal facilities for high-level radioactive waste and spent nuclear fuel." }
+      ],
+      "Emergency Preparedness": [
+        { code: "IAEA GSR Part 7", title: "Preparedness and Response for a Nuclear or Radiological Emergency", body: "IAEA", year: 2015, type: "Requirement", status: "A", desc: "Establishes requirements for emergency preparedness and response including threat assessment and planning zones." },
+        { code: "EPA PAG Manual", title: "Protective Action Guides and Planning Guidance for Radiological Incidents", body: "US EPA", year: 2017, type: "Guideline", status: "A", desc: "Provides radiological trigger thresholds and protective actions (evacuation, sheltering, food bans) for officials managing emergency responses to nuclear incidents." }
+      ],
+      "Security & Safeguards": [
+        { code: "IAEA NSS-13", title: "Nuclear Security Recommendations on Physical Protection", body: "IAEA", year: 2011, type: "Recommendation", status: "A", desc: "Fundamental recommendations for physical protection using a threat-based, graded approach." },
+        { code: "INFCIRC/274", title: "The Convention on the Physical Protection of Nuclear Material", body: "IAEA", year: 1987, type: "Treaty", status: "A", desc: "Establishes international legal obligations regarding physical protection of nuclear material in domestic use, storage, and transport." }
+      ],
+      "Decommissioning & Transport": [
+        { code: "IAEA GSR Part 6", title: "Decommissioning of Facilities", body: "IAEA", year: 2014, type: "Requirement", status: "A", desc: "Safety requirements for decommissioning covering planning, conduct, and management of radioactive waste." },
+        { code: "ISO 21238:2007", title: "Scaling factor method to determine the radioactivity of LLW/ILW", body: "ISO", year: 2007, type: "Standard", status: "A", desc: "Methodology to determine the radioactivity of hard-to-measure nuclides in waste packages generated at nuclear power plants by scaling from easy-to-measure gamma emitters." }
+      ]
+    };
 
-        // Note: For full functionality, ensure all INTL/INDO keys are populated as per previous data.
-        const TOPICS = ["Planning Phase (Feasibility & Licensing)", "Construction Phase", "Safety & Licensing", "Design & Engineering", "Environmental & Waste", "Emergency Preparedness", "Security & Safeguards", "Decommissioning & Transport"];
-        const IC = { "Planning Phase (Feasibility & Licensing)": "📋", "Construction Phase": "🏗️", "Safety & Licensing": "⚛️", "Design & Engineering": "⚙️", "Environmental & Waste": "♻️", "Emergency Preparedness": "🚨", "Security & Safeguards": "🛡️", "Decommissioning & Transport": "🔄" };
+    const INDO = {
+      "Planning Phase (Feasibility & Licensing)": [
+        { code: "UU No. 10/1997", title: "Undang-Undang Ketenaganukliran", body: "DPR RI", year: 1997, type: "Law", status: "A", desc: "Indonesia's primary nuclear legislation establishing the legal framework and BAPETEN." },
+        { code: "PP No. 54/2012", title: "Keselamatan dan Keamanan Instalasi Nuklir", body: "Pemerintah RI", year: 2012, type: "Regulation", status: "A", desc: "Comprehensive government regulation on the safety and security of nuclear installations." },
+        { code: "Perba BAPETEN 1/2022", title: "Penatalaksanaan Perizinan Berusaha Berbasis Risiko", body: "BAPETEN", year: 2022, type: "Regulation", status: "A", desc: "BAPETEN's comprehensive licensing regulation implementing the risk-based licensing system for the nuclear sector." },
+        { code: "Perka BAPETEN 4/2007", title: "Keselamatan Reaktor Penelitian", body: "BAPETEN", year: 2007, type: "Regulation", status: "A", desc: "Establishes safety requirements for research reactors. Often used as a regulatory baseline and capacity-building milestone prior to commercial NPP deployment." }
+      ],
+      "Construction Phase": [
+        { code: "Perka BAPETEN 5/2007", title: "Ketentuan Keselamatan Desain Reaktor Daya", body: "BAPETEN", year: 2007, type: "Regulation", status: "A", desc: "Establishes safety requirements for power reactor design that must be met before and during construction." },
+        { code: "SNI 13-7129-2005", title: "Konstruksi Bejana Tekan Reaktor Daya Air Ringan", body: "BSN", year: 2005, type: "Standard", status: "A", desc: "National standard for construction of light water reactor pressure vessels." },
+        { code: "SNI ISO 19443:2018", title: "Sistem Manajemen Mutu Sektor Energi Nuklir", body: "BSN", year: 2018, type: "Standard", status: "A", desc: "Indonesian adoption of ISO 19443 for quality management systems in the nuclear supply chain. Crucial for local contractors preparing for NPP construction." }
+      ],
+      "Safety & Licensing": [
+        { code: "PP No. 45/2023", title: "Keselamatan Radiasi Pengion dan Keamanan Zat Radioaktif", body: "Pemerintah RI", year: 2023, type: "Regulation", status: "A", desc: "The latest government regulation on ionizing radiation safety and radioactive material security." },
+        { code: "Perba BAPETEN 6/2023", title: "Sistem Manajemen Fasilitas dan Kegiatan Pemanfaatan Tenaga Nuklir", body: "BAPETEN", year: 2023, type: "Regulation", status: "A", desc: "Updated regulation on management systems based on IAEA GSR Part 2." },
+        { code: "Perka BAPETEN 9/2014", title: "Laporan Analisis Keselamatan Instalasi Nuklir", body: "BAPETEN", year: 2014, type: "Regulation", status: "A", desc: "Details the required format, content, and depth of analysis for the Safety Analysis Report (SAR) which must be submitted for NPP licensing." }
+      ],
+      "Design & Engineering": [
+        { code: "Perba BAPETEN 3/2022", title: "Keselamatan Desain Teras Reaktor Daya", body: "BAPETEN", year: 2022, type: "Regulation", status: "A", desc: "Specific regulation addressing reactor core safety design for water-cooled power reactors." },
+        { code: "Perka BAPETEN 3/2011", title: "Desain Sistem Instrumentasi dan Pengendalian pada PLTN", body: "BAPETEN", year: 2011, type: "Regulation", status: "A", desc: "Regulation on I&C system design for NPPs." },
+        { code: "SNI 13-7128-2005", title: "Sistem Air Pendingin Reaktor Daya", body: "BSN", year: 2005, type: "Standard", status: "A", desc: "Indonesian national standard specifying the technical requirements for the ultimate heat sink and reactor cooling water systems." }
+      ],
+      "Environmental & Waste": [
+        { code: "PP No. 61/2013", title: "Pengelolaan Limbah Radioaktif", body: "Pemerintah RI", year: 2013, type: "Regulation", status: "A", desc: "Comprehensive government regulation on radioactive waste management." },
+        { code: "UU No. 32/2009", title: "Perlindungan dan Pengelolaan Lingkungan Hidup", body: "DPR RI", year: 2009, type: "Law", status: "A", desc: "Environmental protection law requiring AMDAL for all major development projects including nuclear facilities." },
+        { code: "Perka BAPETEN 1/2012", title: "Pemantauan Radioaktivitas Lingkungan", body: "BAPETEN", year: 2012, type: "Regulation", status: "A", desc: "Requires operators of nuclear facilities to implement continuous environmental radioactivity monitoring programs and report to the regulatory body." }
+      ],
+      "Emergency Preparedness": [
+        { code: "Perba BAPETEN 3/2019", title: "Rencana Penanggulangan Kedaruratan Nuklir/Radiologi", body: "BAPETEN", year: 2019, type: "Regulation", status: "A", desc: "Updated regulation on nuclear/radiological emergency response plans." },
+        { code: "Perpres No. 197/2014", title: "Kesiapsiagaan Nuklir", body: "Presiden RI", year: 2014, type: "Regulation", status: "A", desc: "Presidential regulation on national nuclear preparedness establishing coordination mechanisms." },
+        { code: "Perba BAPETEN 1/2024", title: "Intervensi dalam Keadaan Darurat Radiologi", body: "BAPETEN", year: 2024, type: "Regulation", status: "A", desc: "The latest guidelines defining operational intervention levels (OILs) and protective actions during nuclear emergencies, aligning with current IAEA GSG-2 criteria." }
+      ],
+      "Security & Safeguards": [
+        { code: "Perba BAPETEN 5/2024", title: "Keamanan Zat Radioaktif", body: "BAPETEN", year: 2024, type: "Regulation", status: "A", desc: "Latest BAPETEN regulation on radioactive source security using a 5-category risk-based system." },
+        { code: "Perka BAPETEN 1/2009", title: "Proteksi Fisik Bahan Nuklir dan Instalasi", body: "BAPETEN", year: 2009, type: "Regulation", status: "A", desc: "Physical protection regulation implementing INFCIRC/225/Rev.5 principles." },
+        { code: "Perka BAPETEN 6/2020", title: "Keamanan Siber pada Instalasi Nuklir", body: "BAPETEN", year: 2020, type: "Regulation", status: "A", desc: "Mandates computer security programs and cybersecurity defensive architectures for digital instrumentation and control systems at nuclear facilities." }
+      ],
+      "Decommissioning & Transport": [
+        { code: "Perba BAPETEN 7/2020", title: "Ketentuan Keselamatan dan Tata Laksana Pengangkutan Zat Radioaktif", body: "BAPETEN", year: 2020, type: "Regulation", status: "A", desc: "Updated regulation on safety provisions and procedures for transport of radioactive materials." },
+        { code: "Perka BAPETEN 11/2016", title: "Keselamatan Dekomisioning Reaktor Nuklir", body: "BAPETEN", year: 2016, type: "Regulation", status: "A", desc: "Reactor decommissioning safety regulation." },
+        { code: "Perka BAPETEN 8/2008", title: "Penyediaan Dana Dekomisioning Instalasi Nuklir", body: "BAPETEN", year: 2008, type: "Regulation", status: "A", desc: "Requires operators to establish a guaranteed financial mechanism (decommissioning fund) prior to operation to ensure safe dismantling and site remediation." }
+      ]
+    };
 
-        function Dot({ s }) { const c = SC[s] || C.textMuted; return <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 700, color: c }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: c, boxShadow: `0 0 5px ${c}55`, display: "inline-block" }} />{SL[s]}</span>; }
-        function Badge({ t }) { const c = TC[t] || C.textDim; return <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: c, background: c + "15", border: `1px solid ${c}30`, borderRadius: 3, padding: "1px 6px" }}>{t}</span>; }
+    const TOPICS = ["Planning Phase (Feasibility & Licensing)", "Construction Phase", "Safety & Licensing", "Design & Engineering", "Environmental & Waste", "Emergency Preparedness", "Security & Safeguards", "Decommissioning & Transport"];
+    const IC = { "Planning Phase (Feasibility & Licensing)": "📋", "Construction Phase": "🏗️", "Safety & Licensing": "⚛️", "Design & Engineering": "⚙️", "Environmental & Waste": "♻️", "Emergency Preparedness": "🚨", "Security & Safeguards": "🛡️", "Decommissioning & Transport": "🔄" };
 
-        function Card({ r, tag, open, toggle }) {
-          return (
-            <div onClick={toggle} style={{ background: open ? C.bgHover : C.bgCard, border: `1px solid ${open ? C.accent + "44" : C.border}`, borderRadius: 7, padding: "10px 12px", cursor: "pointer", transition: "all 0.15s", marginBottom: "5px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 6 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 4 }}>
-                    <span style={{ fontFamily: "monospace", fontSize: 10, fontWeight: 700, color: tag === "i" ? C.accent : C.blue, background: tag === "i" ? C.accentDim : C.blueDim, padding: "1px 6px", borderRadius: 3 }}>{r.code}</span>
-                    <Badge t={r.type} />
-                    <Dot s={r.status} />
-                  </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.text, lineHeight: 1.35 }}>{r.title}</div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, flexShrink: 0 }}>
-                  <span style={{ fontSize: 8, color: C.textMuted, background: C.border, borderRadius: 3, padding: "1px 4px" }}>{r.body}</span>
-                  <span style={{ fontSize: 8, color: C.textMuted }}>{r.year}</span>
-                </div>
+    function Dot({ s }) { const c = SC[s] || C.textMuted; return <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 700, color: c }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: c, boxShadow: `0 0 5px ${c}55`, display: "inline-block" }} />{SL[s]}</span>; }
+    function Badge({ t }) { const c = TC[t] || C.textDim; return <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: c, background: c + "15", border: `1px solid ${c}30`, borderRadius: 3, padding: "1px 6px" }}>{t}</span>; }
+
+    function Card({ r, tag, open, toggle }) {
+      return (
+        <div onClick={toggle} style={{ background: open ? C.bgHover : C.bgCard, border: `1px solid ${open ? C.accent + "44" : C.border}`, borderRadius: 8, padding: "14px 16px", cursor: "pointer", transition: "all 0.2s ease-in-out", boxShadow: open ? `0 4px 12px ${C.bgHover}` : "none" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+                <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: tag === "i" ? C.accent : C.blue, background: tag === "i" ? C.accentDim : C.blueDim, padding: "2px 8px", borderRadius: 4 }}>{r.code}</span>
+                <Badge t={r.type} />
+                <Dot s={r.status} />
               </div>
-              {open && <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.border}`, fontSize: 11, color: C.textDim, lineHeight: 1.75, textAlign: "justify" }}>{r.desc}</div>}
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, lineHeight: 1.4 }}>{r.title}</div>
             </div>
-          );
-        }
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+              <span style={{ fontSize: 9, color: C.textDim, background: C.border, borderRadius: 4, padding: "2px 6px", fontWeight: 600 }}>{r.body}</span>
+              <span style={{ fontSize: 9, color: C.textMuted }}>{r.year}</span>
+            </div>
+          </div>
+          {open && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}`, fontSize: 12, color: C.textDim, lineHeight: 1.6, animation: "fadeIn 0.2s ease-in-out" }}>
+              {r.desc}
+            </div>
+          )}
+        </div>
+      );
+    }
 
-        function Radar({ data, sz = 260 }) {
-          const cx = sz / 2, cy = sz / 2, r = sz * 0.32, n = data.length;
-          const a = data.map((_, i) => (Math.PI * 2 * i) / n - Math.PI / 2);
-          const gp = (ai, v) => ({ x: cx + Math.cos(ai) * r * v, y: cy + Math.sin(ai) * r * v });
-          const poly = (vs, f, s) => <polygon points={vs.map((v, i) => `${gp(a[i], v).x},${gp(a[i], v).y}`).join(" ")} fill={f} stroke={s} strokeWidth={1.5} />;
-          return (
-            <svg viewBox={`0 0 ${sz} ${sz}`} style={{ width: "100%", maxWidth: sz }}>
-              {[.25, .5, .75, 1].map(l => <polygon key={l} points={a.map(ai => `${cx + Math.cos(ai) * r * l},${cy + Math.sin(ai) * r * l}`).join(" ")} fill="none" stroke={C.border} strokeWidth={.5} />)}
-              {a.map((ai, i) => <g key={i}><line x1={cx} y1={cy} x2={cx + Math.cos(ai) * r} y2={cy + Math.sin(ai) * r} stroke={C.border} strokeWidth={.5} /><text x={cx + Math.cos(ai) * (r + 18)} y={cy + Math.sin(ai) * (r + 18)} fill={C.textMuted} fontSize={6.5} fontWeight={600} textAnchor="middle" dominantBaseline="middle">{data[i].l}</text></g>)}
-              {poly(data.map(d => d.i), C.accentDim, C.accent)}{poly(data.map(d => d.d), C.blueDim, C.blue)}
-            </svg>
-          );
-        }
+    function Radar({ data, sz = 240 }) {
+      const cx = sz / 2, cy = sz / 2, r = sz * 0.35, n = data.length;
+      const a = data.map((_, i) => (Math.PI * 2 * i) / n - Math.PI / 2);
+      const gp = (ai, v) => ({ x: cx + Math.cos(ai) * r * v, y: cy + Math.sin(ai) * r * v });
+      const poly = (vs, f, s) => <polygon points={vs.map((v, i) => `${gp(a[i], v).x},${gp(a[i], v).y}`).join(" ")} fill={f} stroke={s} strokeWidth={1.5} />;
+      return (
+        <svg viewBox={`0 0 ${sz} ${sz}`} style={{ width: "100%", maxWidth: sz, display: "block", margin: "0 auto" }}>
+          {[.25, .5, .75, 1].map(l => <polygon key={l} points={a.map(ai => `${cx + Math.cos(ai) * r * l},${cy + Math.sin(ai) * r * l}`).join(" ")} fill="none" stroke={C.border} strokeWidth={.5} />)}
+          {a.map((ai, i) => <g key={i}><line x1={cx} y1={cy} x2={cx + Math.cos(ai) * r} y2={cy + Math.sin(ai) * r} stroke={C.border} strokeWidth={.5} /><text x={cx + Math.cos(ai) * (r + 18)} y={cy + Math.sin(ai) * (r + 18)} fill={C.textMuted} fontSize={7} fontWeight={600} textAnchor="middle" dominantBaseline="middle">{data[i].l}</text></g>)}
+          {poly(data.map(d => d.i), C.accentDim, C.accent)}
+          {poly(data.map(d => d.d), C.blueDim, C.blue)}
+        </svg>
+      );
+    }
 
-        function App() {
-          const [scope, setScope] = useState("all");
-          const [topic, setTopic] = useState("Planning Phase (Feasibility & Licensing)");
-          const [search, setSearch] = useState("");
-          const [exp, setExp] = useState(null);
-          const [tab, setTab] = useState("list");
-          const [sf, setSf] = useState("all");
+    // ─── FITUR AI ASSISTANT ───
+    function ChatAI() {
+      const [open, setOpen] = useState(false);
+      const [messages, setMessages] = useState([
+        { role: "ai", text: "Halo! Saya Asisten AI Standar Nuklir. Beritahu saya apa yang sedang Anda cari (contoh: **'standar ASME'**, **'regulasi BAPETEN limbah'**, atau **'ISO quality'**)." }
+      ]);
+      const [input, setInput] = useState("");
+      const [isTyping, setIsTyping] = useState(false);
+      const scrollRef = useRef(null);
 
-          const intl = INTL[topic] || [], indo = INDO[topic] || [];
-          const f = rs => rs.filter(r => (!search || [r.code, r.title, r.body, r.desc, r.type].join(" ").toLowerCase().includes(search.toLowerCase())) && (sf === "all" || r.status === sf));
-          const fI = f(intl), fD = f(indo);
-          const tI = Object.values(INTL).flat().length, tD = Object.values(INDO).flat().length;
-          const aI = Object.values(INTL).flat().filter(r => r.status === "A").length, aD = Object.values(INDO).flat().filter(r => r.status === "A").length;
-          const mx = Math.max(...TOPICS.map(t => Math.max(INTL[t]?.length || 0, INDO[t]?.length || 0))) || 1;
-          const rd = TOPICS.map(t => ({ l: t.split(" ")[0].replace("(", ""), i: (INTL[t]?.length || 0) / mx, d: (INDO[t]?.length || 0) / mx }));
+      useEffect(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, [messages, isTyping]);
 
-          return (
-            <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: C.bg, minHeight: "100vh", color: C.text, paddingBottom: "40px" }}>
-              <div style={{ background: "linear-gradient(135deg, #0a1628, #0d1b30)", borderBottom: `1px solid ${C.border}`, padding: "20px 16px 14px", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, borderRadius: "50%", background: "#00e4b811", filter: "blur(40px)" }} />
-                <div style={{ position: "relative", maxWidth: 920, margin: "0 auto" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 22 }}>☢️</span>
-                    <div>
-                      <h1 style={{ fontSize: 18, fontWeight: 900, margin: 0, background: `linear-gradient(135deg, ${C.accent}, ${C.blue})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Nuclear Power Plant</h1>
-                      <h2 style={{ fontSize: 10, fontWeight: 500, color: C.textDim, margin: 0, letterSpacing: 2, textTransform: "uppercase" }}>Standards & Regulations Database — International & Indonesia</h2>
-                    </div>
-                  </div>
+      const parseMarkdown = (text) => {
+        return text.split('\n').map((line, i) => (
+          <span key={i} style={{ display: "block", marginBottom: 4 }}>
+            {line.split('**').map((part, j) => j % 2 === 1 ? <strong key={j} style={{ color: C.accent, fontWeight: 700 }}>{part}</strong> : part)}
+          </span>
+        ));
+      };
+
+      const handleAsk = (e) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        
+        const userQ = input.trim();
+        setMessages(prev => [...prev, { role: "user", text: userQ }]);
+        setInput("");
+        setIsTyping(true);
+
+        setTimeout(() => {
+          const keywords = userQ.toLowerCase().split(' ').filter(k => k.length > 2);
+          let results = [];
+          
+          const searchDb = (db) => {
+            Object.values(db).flat().forEach(r => {
+              if (keywords.some(k => r.title.toLowerCase().includes(k) || r.desc.toLowerCase().includes(k) || r.code.toLowerCase().includes(k))) {
+                results.push(r);
+              }
+            });
+          };
+          
+          searchDb(INTL);
+          searchDb(INDO);
+          
+          results = results.filter((v, i, a) => a.findIndex(t => (t.code === v.code)) === i);
+
+          let reply = "";
+          if (results.length > 0) {
+            const top = results.slice(0, 3);
+            reply = `Saya menemukan ${results.length} standar yang relevan. Berikut rekomendasi teratas:\n\n` + 
+                    top.map(r => `• **${r.code}** (${r.body}): ${r.title}`).join('\n') + 
+                    `\n\nAnda dapat mencari kode tersebut di kolom pencarian utama untuk detailnya.`;
+          } else if (userQ.toLowerCase().match(/halo|hai|bantu|pagi|siang|malam/)) {
+            reply = "Halo! Silakan ketik kata kunci standar atau regulasi yang Anda cari.";
+          } else {
+            reply = "Maaf, saya tidak menemukan standar spesifik yang cocok dengan kata kunci tersebut di database ini. Bisa coba kata kunci yang lebih umum?";
+          }
+
+          setMessages(prev => [...prev, { role: "ai", text: reply }]);
+          setIsTyping(false);
+        }, 1200);
+      };
+
+      return (
+        <React.Fragment>
+          <button 
+            onClick={() => setOpen(!open)}
+            style={{
+              position: "fixed", bottom: 24, right: 32, width: 60, height: 60, 
+              borderRadius: "50%", background: `linear-gradient(135deg, ${C.accent}, ${C.blue})`,
+              border: "none", color: "#fff", fontSize: 26, cursor: "pointer",
+              boxShadow: "0 4px 15px rgba(0,228,184,0.3)", zIndex: 1000,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "transform 0.2s"
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.1)"}
+            onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+          >
+            {open ? "✕" : "🤖"}
+          </button>
+
+          {open && (
+            <div style={{
+              position: "fixed", bottom: 100, right: 32, width: 340, height: 480,
+              background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12,
+              boxShadow: "0 10px 40px rgba(0,0,0,0.6)", zIndex: 1000,
+              display: "flex", flexDirection: "column", overflow: "hidden"
+            }}>
+              <div style={{ background: C.border, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>🤖</span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>AI Assistant</div>
+                  <div style={{ fontSize: 11, color: C.accent }}>Cari Regulasi dengan Cepat</div>
                 </div>
               </div>
-              <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 12px 36px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, margin: "12px 0" }}>
-                  {[{ l: "International", v: tI, a: aI, c: C.accent }, { l: "Indonesia", v: tD, a: aD, c: C.blue }, { l: "Topics", v: 8, c: C.purple }, { l: "Active Total", v: aI + aD, c: C.green }].map((s, i) => (
-                    <div key={i} style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 7, padding: "10px 6px", textAlign: "center" }}>
-                      <div style={{ fontSize: 20, fontWeight: 900, color: s.c, fontFamily: "monospace" }}>{s.v}</div>
-                      <div style={{ fontSize: 8, fontWeight: 700, color: C.text, textTransform: "uppercase", letterSpacing: .7 }}>{s.l}</div>
+              
+              <div ref={scrollRef} style={{ flex: 1, padding: 16, overflowY: "auto", display: "flex", flexDirection: "column", gap: 14 }}>
+                {messages.map((m, i) => (
+                  <div key={i} style={{
+                    alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                    background: m.role === "user" ? C.blue + "33" : C.bgHover,
+                    border: `1px solid ${m.role === "user" ? C.blue + "66" : C.border}`,
+                    padding: "10px 14px", borderRadius: 8, maxWidth: "85%",
+                    fontSize: 12, color: C.text, lineHeight: 1.5
+                  }}>
+                    {parseMarkdown(m.text)}
+                  </div>
+                ))}
+                {isTyping && (
+                  <div style={{ alignSelf: "flex-start", background: C.bgHover, border: `1px solid ${C.border}`, padding: "10px 14px", borderRadius: 8, fontSize: 12, color: C.textDim }}>
+                    <em>AI sedang mengetik...</em>
+                  </div>
+                )}
+              </div>
+              
+              <form onSubmit={handleAsk} style={{ display: "flex", padding: 16, borderTop: `1px solid ${C.border}`, background: C.bgHover }}>
+                <input 
+                  value={input} onChange={e => setInput(e.target.value)}
+                  placeholder="Tanya standar apa..."
+                  style={{ flex: 1, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 12, outline: "none" }}
+                />
+                <button type="submit" disabled={isTyping || !input.trim()} style={{ background: C.accent, color: "#000", border: "none", borderRadius: 6, padding: "0 16px", marginLeft: 8, cursor: "pointer", fontWeight: 700, fontSize: 12, opacity: isTyping || !input.trim() ? 0.5 : 1 }}>
+                  Kirim
+                </button>
+              </form>
+            </div>
+          )}
+        </React.Fragment>
+      );
+    }
+
+    function Dashboard() {
+      const [scope, setScope] = useState("all");
+      const [topic, setTopic] = useState("Planning Phase (Feasibility & Licensing)");
+      const [search, setSearch] = useState("");
+      const [exp, setExp] = useState(null);
+      const [tab, setTab] = useState("list");
+      const [sf, setSf] = useState("all");
+
+      const intl = INTL[topic] || [];
+      const indo = INDO[topic] || [];
+      const f = (rs) => rs.filter(r => (!search || [r.code, r.title, r.body, r.desc, r.type].join(" ").toLowerCase().includes(search.toLowerCase())) && (sf === "all" || r.status === sf));
+      const fI = f(intl), fD = f(indo);
+      
+      const tI = Object.values(INTL).flat().length, tD = Object.values(INDO).flat().length;
+      const aI = Object.values(INTL).flat().filter(r => r.status === "A").length, aD = Object.values(INDO).flat().filter(r => r.status === "A").length;
+      const mx = Math.max(...TOPICS.map(t => Math.max(INTL[t]?.length || 0, INDO[t]?.length || 0))) || 1;
+      const rd = TOPICS.map(t => ({ l: t.split(" ")[0].replace("(", ""), i: (INTL[t]?.length || 0) / mx, d: (INDO[t]?.length || 0) / mx }));
+
+      return (
+        <div style={{ display: "flex", height: "100vh", fontFamily: "'Segoe UI', system-ui, sans-serif", background: C.bg, color: C.text, overflow: "hidden" }}>
+          
+          {/* ─── SIDEBAR ─── */}
+          <aside style={{ width: 280, minWidth: 280, background: C.bgCard, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", zIndex: 10 }}>
+            <div style={{ padding: "24px 20px", borderBottom: `1px solid ${C.border}`, background: "linear-gradient(135deg, #0a1628, #0d1b30)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 28 }}>☢️</span>
+                <div>
+                  <h1 style={{ fontSize: 18, fontWeight: 900, margin: 0, background: `linear-gradient(135deg, ${C.accent}, ${C.blue})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Nuclear Regs</h1>
+                  <h2 style={{ fontSize: 10, fontWeight: 500, color: C.textDim, margin: 0, letterSpacing: 1.5, textTransform: "uppercase" }}>Database Dashboard</h2>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ padding: "20px 16px 10px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Categories</div>
+            </div>
+            <nav style={{ flex: 1, overflowY: "auto", padding: "0 12px 20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {TOPICS.map(t => (
+                  <button 
+                    key={t} 
+                    onClick={() => { setTopic(t); setExp(null); }} 
+                    style={{ 
+                      display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", 
+                      borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, textAlign: "left",
+                      background: topic === t ? C.accentDim : "transparent", 
+                      color: topic === t ? C.accent : C.textDim,
+                      transition: "all 0.15s"
+                    }}
+                    onMouseOver={(e) => { if(topic !== t) e.currentTarget.style.background = C.bgHover; }}
+                    onMouseOut={(e) => { if(topic !== t) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <span style={{ fontSize: 16 }}>{IC[t]}</span>
+                    <span style={{ lineHeight: 1.2 }}>{t}</span>
+                  </button>
+                ))}
+              </div>
+            </nav>
+          </aside>
+
+          {/* ─── MAIN CONTENT ─── */}
+          <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+            
+            <header style={{ background: C.bgCard, borderBottom: `1px solid ${C.border}`, padding: "16px 32px", display: "flex", gap: 20, alignItems: "center", justifyContent: "space-between", zIndex: 5 }}>
+              <div style={{ flex: 1, maxWidth: 400, position: "relative" }}>
+                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: C.textMuted }}>🔍</span>
+                <input 
+                  value={search} onChange={e => setSearch(e.target.value)} 
+                  placeholder="Search code, title, or body..." 
+                  style={{ width: "100%", padding: "10px 10px 10px 36px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", transition: "border-color 0.2s", boxSizing: "border-box" }} 
+                  onFocus={(e) => e.target.style.borderColor = C.accent}
+                  onBlur={(e) => e.target.style.borderColor = C.border}
+                />
+              </div>
+              
+              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                <div style={{ display: "flex", background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden", padding: 2 }}>
+                  {[{ id: "all", l: "All" }, { id: "international", l: "🌐 Intl" }, { id: "indonesia", l: "🇮🇩 IDN" }].map(s => (
+                    <button key={s.id} onClick={() => setScope(s.id)} style={{ padding: "6px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, background: scope === s.id ? (s.id === "indonesia" ? C.blue : s.id === "international" ? C.accent : `linear-gradient(135deg, ${C.accent}, ${C.blue})`) : "transparent", color: scope === s.id ? "#fff" : C.textDim, transition: "all .15s" }}>{s.l}</button>
+                  ))}
+                </div>
+
+                <div style={{ width: 1, height: 24, background: C.border }} />
+
+                <div style={{ display: "flex", background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                  {[{ id: "all", l: "All", c: C.text }, { id: "A", l: "Active", c: C.green }, { id: "S", l: "Superseded", c: C.amber }].map(x => (
+                    <button key={x.id} onClick={() => setSf(x.id)} style={{ padding: "8px 12px", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, background: sf === x.id ? x.c + "22" : "transparent", color: sf === x.id ? x.c : C.textMuted }}>{x.l}</button>
+                  ))}
+                </div>
+
+                <div style={{ width: 1, height: 24, background: C.border }} />
+
+                <div style={{ display: "flex", background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                  {["list", "chart"].map(v => (
+                    <button key={v} onClick={() => setTab(v)} style={{ padding: "8px 16px", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", background: tab === v ? C.accent : "transparent", color: tab === v ? "#000" : C.textDim }}>{v === "list" ? "📋 List" : "📊 Charts"}</button>
+                  ))}
+                </div>
+              </div>
+            </header>
+
+            <div style={{ flex: 1, overflowY: "auto", padding: "32px", scrollBehavior: "smooth" }}>
+              
+              <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+                
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+                  {[{ l: "International Regs", v: tI, a: aI, c: C.accent }, { l: "Indonesian Regs", v: tD, a: aD, c: C.blue }, { l: "Total Topics", v: 8, c: C.purple }, { l: "Active Database", v: aI + aD, c: C.green }].map((s, i) => (
+                    <div key={i} style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{s.l}</div>
+                      <div style={{ fontSize: 32, fontWeight: 900, color: s.c, fontFamily: "monospace", lineHeight: 1 }}>{s.v}</div>
+                      {s.a != null && <div style={{ fontSize: 11, color: C.green, marginTop: 8, fontWeight: 600 }}>● {s.a} Active Standard</div>}
                     </div>
                   ))}
                 </div>
-                <div style={{ display: "flex", gap: 3, background: C.bgCard, borderRadius: 7, padding: 3, marginBottom: 8, border: `1px solid ${C.border}` }}>
-                  {[{ id: "all", l: "All" }, { id: "international", l: "🌐 International" }, { id: "indonesia", l: "🇮🇩 Indonesia" }].map(s => (
-                    <button key={s.id} onClick={() => setScope(s.id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 5, border: "none", cursor: "pointer", fontSize: 10, fontWeight: 700, background: scope === s.id ? (s.id === "indonesia" ? C.blue : s.id === "international" ? C.accent : `linear-gradient(135deg, ${C.accent}, ${C.blue})`) : "transparent", color: scope === s.id ? "#fff" : C.textDim }}>{s.l}</button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 5, marginBottom: 8 }}>
-                  {TOPICS.map(t => (
-                    <button key={t} onClick={() => { setTopic(t); setExp(null); }} style={{ flexShrink: 0, padding: "7px 10px", borderRadius: 6, border: `1px solid ${topic === t ? C.accent + "55" : C.border}`, cursor: "pointer", fontSize: 9, fontWeight: 600, background: topic === t ? C.accentDim : C.bgCard, color: topic === t ? C.accent : C.textDim, whiteSpace: "nowrap" }}>{IC[t]} {t}</button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 5, marginBottom: 8, flexWrap: "wrap" }}>
-                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search code, title, body, description..." style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bgCard, color: C.text, fontSize: 10, outline: "none" }} />
-                  <div style={{ display: "flex", background: C.bgCard, borderRadius: 6, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                    {[{ id: "all", l: "All", c: C.accent }, { id: "A", l: "Active", c: C.green }, { id: "S", l: "Superseded", c: C.amber }].map(x => (
-                      <button key={x.id} onClick={() => setSf(x.id)} style={{ padding: "6px 8px", border: "none", cursor: "pointer", fontSize: 9, fontWeight: 700, background: sf === x.id ? x.c + "22" : "transparent", color: sf === x.id ? x.c : C.textMuted }}>{x.l}</button>
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", background: C.bgCard, borderRadius: 6, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                    {["list", "chart"].map(v => (
-                      <button key={v} onClick={() => setTab(v)} style={{ padding: "6px 10px", border: "none", cursor: "pointer", fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: tab === v ? C.accent : "transparent", color: tab === v ? "#000" : C.textDim }}>{v === "list" ? "📋 List" : "📊 Charts"}</button>
-                    ))}
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+                  <div>
+                    <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px", color: C.text }}>{IC[topic]} {topic}</h2>
+                    <div style={{ fontSize: 13, color: C.textMuted, maxWidth: 800, lineHeight: 1.6 }}>{TOPIC_DESC[topic]}</div>
                   </div>
                 </div>
+
+                <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, margin: "0 0 24px" }} />
 
                 {tab === "chart" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        <div style={{ background: C.bgCard, borderRadius: 8, padding: 14, textAlign: "center" }}>
-                            <Radar data={rd} />
-                        </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 32 }}>
+                    <div style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, gridRow: "span 2" }}>
+                      <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 16px" }}>Coverage Analysis</h3>
+                      <div style={{ display: "flex", justifyContent: "center" }}><Radar data={rd} /></div>
+                      <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 20 }}>
+                        <span style={{ fontSize: 11, color: C.accent, fontWeight: 600 }}>● International</span>
+                        <span style={{ fontSize: 11, color: C.blue, fontWeight: 600 }}>● Indonesia</span>
+                      </div>
                     </div>
+                    
+                    <div style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
+                      <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 16px" }}>Volume per Topic</h3>
+                      {TOPICS.map(t => {
+                        const iC = INTL[t]?.length || 0, dC = INDO[t]?.length || 0;
+                        return (
+                          <div key={t} style={{ marginBottom: 12 }}>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6 }}>{IC[t]} {t}</div>
+                            {[{ v: iC, c: C.accent }, { v: dC, c: C.blue }].map((x, j) => (
+                              <div key={j} style={{ display: "flex", gap: 8, alignItems: "center", marginTop: j ? 4 : 0 }}>
+                                <span style={{ fontSize: 10, color: x.c, width: 20, textAlign: "right", fontWeight: 700 }}>{x.v}</span>
+                                <div style={{ flex: 1, height: 6, background: C.bg, borderRadius: 3, overflow: "hidden" }}><div style={{ width: `${(x.v / mx) * 100}%`, height: "100%", background: x.c, borderRadius: 3 }} /></div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
+                      <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 16px" }}>Status Distribution</h3>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+                        {[{ l: "International Data", d: Object.values(INTL).flat(), c: C.accent }, { l: "Indonesian Data", d: Object.values(INDO).flat(), c: C.blue }].map(({ l, d, c }) => {
+                          const tot = d.length, ac = d.filter(r => r.status === "A").length, su = d.filter(r => r.status === "S").length;
+                          return (
+                            <div key={l}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: c, marginBottom: 8 }}>{l} ({tot})</div>
+                              {[{ lb: "Active", v: ac, co: C.green }, { lb: "Superseded", v: su, co: C.amber }].filter(x => x.v > 0).map(x => (
+                                <div key={x.lb} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: x.co }} />
+                                  <span style={{ fontSize: 11, color: C.textDim, width: 80 }}>{x.lb}</span>
+                                  <div style={{ flex: 1, height: 6, background: C.bg, borderRadius: 3 }}><div style={{ width: `${(x.v / tot) * 100}%`, height: "100%", background: x.co, borderRadius: 3 }} /></div>
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: x.co, width: 30, textAlign: "right" }}>{x.v}</span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {tab === "list" && (
-                  <>
-                    <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}>
-                      {scope === "all" ? `${fI.length} int'l + ${fD.length} IDN` : scope === "international" ? `${fI.length} international` : `${fD.length} Indonesia`} in <span style={{ color: C.accent }}>{topic}</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 32 }}>
+                    
+                    <div style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>
+                      Showing {scope === "all" ? `${fI.length} International & ${fD.length} Indonesian` : scope === "international" ? `${fI.length} International` : `${fD.length} Indonesian`} regulations
+                      {sf !== "all" && <span style={{ color: SC[sf] }}> — Filtered by {SL[sf]}</span>}
                     </div>
+
                     {(scope === "all" || scope === "international") && fI.length > 0 && (
-                      <div style={{ marginBottom: 14 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
-                          <div style={{ width: 3, height: 12, background: C.accent, borderRadius: 2 }} />
-                          <span style={{ fontSize: 10, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: .8 }}>🌐 International ({fI.length})</span>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>
+                          <div style={{ width: 4, height: 16, background: C.accent, borderRadius: 2 }} />
+                          <span style={{ fontSize: 16, fontWeight: 800, color: C.accent, letterSpacing: 0.5 }}>🌐 International Standards ({fI.length})</span>
                         </div>
-                        {fI.map(r => <Card key={`i-${r.code}`} r={r} tag="i" open={exp === `i-${r.code}`} toggle={() => setExp(exp === `i-${r.code}` ? null : `i-${r.code}`)} />)}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {fI.map(r => <Card key={`i-${r.code}`} r={r} tag="i" open={exp === `i-${r.code}`} toggle={() => setExp(exp === `i-${r.code}` ? null : `i-${r.code}`)} />)}
+                        </div>
                       </div>
                     )}
+
                     {(scope === "all" || scope === "indonesia") && fD.length > 0 && (
-                      <div style={{ marginBottom: 14 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
-                          <div style={{ width: 3, height: 12, background: C.blue, borderRadius: 2 }} />
-                          <span style={{ fontSize: 10, fontWeight: 800, color: C.blue, textTransform: "uppercase", letterSpacing: .8 }}>🇮🇩 Indonesia ({fD.length})</span>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>
+                          <div style={{ width: 4, height: 16, background: C.blue, borderRadius: 2 }} />
+                          <span style={{ fontSize: 16, fontWeight: 800, color: C.blue, letterSpacing: 0.5 }}>🇮🇩 Indonesian Regulations ({fD.length})</span>
                         </div>
-                        {fD.map(r => <Card key={`d-${r.code}`} r={r} tag="d" open={exp === `d-${r.code}`} toggle={() => setExp(exp === `d-${r.code}` ? null : `d-${r.code}`)} />)}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {fD.map(r => <Card key={`d-${r.code}`} r={r} tag="d" open={exp === `d-${r.code}`} toggle={() => setExp(exp === `d-${r.code}` ? null : `d-${r.code}`)} />)}
+                        </div>
                       </div>
                     )}
-                  </>
+
+                    {fI.length === 0 && fD.length === 0 && (
+                      <div style={{ textAlign: "center", padding: "60px 20px", background: C.bgCard, borderRadius: 12, border: `1px dashed ${C.border}` }}>
+                        <div style={{ fontSize: 32, marginBottom: 16 }}>📭</div>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: C.textDim, marginBottom: 8 }}>No Regulations Found</div>
+                        <div style={{ fontSize: 12, color: C.textMuted }}>Adjust your search keywords or filter settings to find what you're looking for.</div>
+                      </div>
+                    )}
+                  </div>
                 )}
+
+                <div style={{ marginTop: 40, paddingTop: 20, borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
+                  <div style={{ display: "flex", gap: 20, background: C.bgCard, padding: "10px 16px", borderRadius: 8 }}>
+                    {[{ s: "A", l: "Active" }, { s: "S", l: "Superseded" }, { s: "E", l: "Expired" }].map(x => (
+                      <div key={x.s} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: SC[x.s], boxShadow: `0 0 5px ${SC[x.s]}44` }} />
+                        <span style={{ fontSize: 11, color: C.textDim, fontWeight: 600 }}>{x.l}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 10, color: C.textMuted, textAlign: "right", lineHeight: 1.6 }}>
+                    Sources: IAEA, ASME, IEEE, IEC, US NRC, BAPETEN (JDIH), BSN.<br/>
+                    Verified as of May 2026. Internal use only.
+                  </div>
+                </div>
+
               </div>
             </div>
-          );
-        }
+          </main>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+          <ChatAI />
+          
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<Dashboard />);
+  </script>
 </body>
 </html>
